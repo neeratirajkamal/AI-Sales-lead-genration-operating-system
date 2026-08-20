@@ -1,0 +1,72 @@
+{
+  "name": "RevenueOS - Event Hunter & Exhibitor Router Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 12
+            }
+          ]
+        }
+      },
+      "id": "node-1",
+      "name": "Schedule Trigger (2x Daily)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/events/discover",
+        "options": {}
+      },
+      "id": "node-2",
+      "name": "Fetch Verified Regional Events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/v1/accounts/route",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"account_name\": \"Valvitalia Group S.p.A.\",\n  \"domain\": \"valvitalia.com\",\n  \"hq_country\": \"Italy\",\n  \"industry\": \"Oil & Gas\",\n  \"uae_presence\": \"not_found\",\n  \"saudi_presence\": \"not_found\",\n  \"active_triggers\": [\"ADIPEC 2026 Stand 8420 exhibitor\"],\n  \"target_geography\": \"Abu Dhabi\"\n}"
+      },
+      "id": "node-3",
+      "name": "Route Exhibitor to Plus UAE / Vortexen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/v1/crm/sync",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"opportunity_id\": \"={{ $json.opportunity_id }}\",\n  \"account_name\": \"={{ $json.account_name }}\",\n  \"offer\": \"={{ $json.primary_offer }}\"\n}"
+      },
+      "id": "node-4",
+      "name": "Sync Qualified Account to Zoho CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [960, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (2x Daily)": {
+      "main": [[{ "node": "Fetch Verified Regional Events", "type": "main", "index": 0 }]]
+    },
+    "Fetch Verified Regional Events": {
+      "main": [[{ "node": "Route Exhibitor to Plus UAE / Vortexen", "type": "main", "index": 0 }]]
+    },
+    "Route Exhibitor to Plus UAE / Vortexen": {
+      "main": [[{ "node": "Sync Qualified Account to Zoho CRM", "type": "main", "index": 0 }]]
+    }
+  }
+}

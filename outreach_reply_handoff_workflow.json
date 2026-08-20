@@ -1,0 +1,73 @@
+{
+  "name": "RevenueOS - Reply Classifier & Instant Human Handoff Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "reply-webhook",
+        "options": {}
+      },
+      "id": "node-1",
+      "name": "Inbound Reply Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/v1/replies/classify",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"outreach_id\": \"={{ $json.body.outreach_id }}\",\n  \"contact_email\": \"={{ $json.body.from_email }}\",\n  \"raw_message\": \"={{ $json.body.message_text }}\",\n  \"reply_channel\": \"email\"\n}"
+      },
+      "id": "node-2",
+      "name": "Classify Intent & Pause Sequence",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.handoff_required }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "node-3",
+      "name": "Check Handoff Required",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/v1/crm/sync",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"opportunity_id\": \"opp-991\",\n  \"account_name\": \"Valvitalia Group S.p.A.\",\n  \"offer\": \"plusuae_representation\"\n}"
+      },
+      "id": "node-4",
+      "name": "Notify Sales Owner & Create Zoho Handoff Deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [960, 200]
+    }
+  ],
+  "connections": {
+    "Inbound Reply Webhook": {
+      "main": [[{ "node": "Classify Intent & Pause Sequence", "type": "main", "index": 0 }]]
+    },
+    "Classify Intent & Pause Sequence": {
+      "main": [[{ "node": "Check Handoff Required", "type": "main", "index": 0 }]]
+    },
+    "Check Handoff Required": {
+      "main": [[{ "node": "Notify Sales Owner & Create Zoho Handoff Deal", "type": "main", "index": 0 }]]
+    }
+  }
+}
