@@ -7,9 +7,9 @@ services:
     name: revenue-os-backend
     env: python
     region: frankfurt # or singapore / oregon
-    buildCommand: pip install -r backend/requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -35,14 +35,15 @@ services:
     name: revenue-os-frontend
     env: node
     region: frankfurt
-    buildCommand: cd frontend && npm install && npm run build
-    startCommand: cd frontend && npm run start
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
     envVars:
       - key: NEXT_PUBLIC_API_BASE_URL
         fromService:
           type: web
           name: revenue-os-backend
-          property: url
+          property: host
 
 # 3. PostgreSQL Database Instance
 databases:
