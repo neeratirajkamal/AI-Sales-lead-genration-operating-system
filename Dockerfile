@@ -1,16 +1,16 @@
-# Production Dockerfile for Next.js Frontend Command Center
+# Next.js Frontend Dockerfile
 FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files from frontend
-COPY frontend/package*.json ./
+# Copy package manifest
+COPY package*.json ./
 
 # Install dependencies
 RUN npm ci
 
-# Copy frontend source code
-COPY frontend/ ./
+# Copy application source code
+COPY . .
 
 # Build Next.js app
 ENV NEXT_TELEMETRY_DISABLED 1
